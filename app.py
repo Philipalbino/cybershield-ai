@@ -1,20 +1,22 @@
 import os
 import sqlite3
-from flask import Flask, render_template, request, redirect, session, jsonify, send_from_directory
+from flask import Flask, render_template, request, redirect, session, jsonify
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from ai_engine import analyze_message  # Your AI engine
-from threading import Thread
-import gradio as gr
 
 load_dotenv()
 
-app = Flask(__name__)
+# ===========================
+# Flask app setup
+# ===========================
+app = Flask(__name__, static_folder="static")
 app.secret_key = os.getenv("SECRET_KEY") or "super-secret-dev-key-123"
 
-# ===============================
-# DATABASE INITIALIZATION
-# ===============================
+# ===========================
+# Database initialization
+# ===========================
 def init_db():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
@@ -52,102 +54,108 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Initialize DB
 init_db()
 
-# ===============================
-# GRADIO AI CHATBOT
-# ===============================
-conversation_history = []
-
-def chat(message):
-    conversation_history.append({"role": "user", "content": message})
-    reply = analyze_message(conversation_history)
-    conversation_history.append({"role": "assistant", "content": reply})
-    return reply
-
-iface = gr.Interface(fn=chat, inputs="text", outputs="text", title="CyberShield-AI")
-
-def run_gradio():
-    iface.launch(server_name="0.0.0.0", server_port=7860)
-
-Thread(target=run_gradio).start()
-
-# ===============================
-# ROUTES
-# ===============================
+# ===========================
+# SEO homepage & static files
+# ===========================
 @app.route("/")
 def home():
-    return render_template("index.html")  # SEO homepage with Google meta tag
+    return render_template("index.html")  # Contains Google meta tag
 
 @app.route("/robots.txt")
 def robots():
-    return send_from_directory(".", "robots.txt")
+    return app.send_static_file("robots.txt")
 
-# -----------------------
-# Registration
-# -----------------------
+# ===========================
+# User registration
+# ===========================
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
-        password = generate_password_hash(request.form["password"])
+        username = request.form.get("username")
+        password = request.form.get("password")
+        hashed_pw = generate_password_hash(password)
+
         try:
             conn = sqlite3.connect("database.db")
             c = conn.cursor()
-            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_pw))
             conn.commit()
             conn.close()
             return redirect("/login")
         except sqlite3.IntegrityError:
             return "Username already exists"
+
     return render_template("register.html")
 
-# -----------------------
-# Login
-# -----------------------
+# ===========================
+# User login
+# ===========================
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username")
+        password = request.form.get("password")
+
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
         c.execute("SELECT * FROM users WHERE username=?", (username,))
         user = c.fetchone()
         conn.close()
+
         if user and check_password_hash(user[2], password):
             session["user_id"] = user[0]
             return redirect("/dashboard")
         else:
             return "Invalid credentials"
+
     return render_template("login.html")
 
-# -----------------------
-# Dashboard
-# -----------------------
+# ===========================
+# User dashboard
+# ===========================
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
         return redirect("/login")
+
     user_id = session["user_id"]
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     c.execute("SELECT * FROM conversations WHERE user_id=?", (user_id,))
     conversations = c.fetchall()
     conn.close()
+
     return render_template("dashboard.html", conversations=conversations)
 
-# -----------------------
+# ===========================
 # Logout
-# -----------------------
+# ===========================
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
 
-# -----------------------
-# Run Flask
-# -----------------------
+# ===========================
+# Chat API endpoint
+# ===========================
+conversation_history = []
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    user_input = data.get("message", "")
+
+    conversation_history.append({"role": "user", "content": user_input})
+    reply = analyze_message(conversation_history)
+    conversation_history.append({"role": "assistant", "content": reply})
+
+    return jsonify({"reply": reply})
+
+# ===========================
+# Production-ready entry
+# ===========================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
