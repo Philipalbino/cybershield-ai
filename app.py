@@ -14,6 +14,10 @@ load_dotenv()
 app = Flask(__name__, static_folder="static")
 app.secret_key = os.getenv("SECRET_KEY") or "super-secret-dev-key-123"
 
+@app.route("/google-site-verification: google701042e23c6c10eb.html")
+def google_verify():
+    return app.send_static_file("google-site-verification: google701042e23c6c10eb.html")
+
 # ===========================
 # Database initialization
 # ===========================
