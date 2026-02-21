@@ -60,6 +60,10 @@ init_db()
 def home():
     return render_template("index.html")
 
+@app.route("/robots.txt")
+def robots():
+    return send_from_directory(".", "robots.txt")
+
 # -------------------------------
 # REGISTER
 # -------------------------------
