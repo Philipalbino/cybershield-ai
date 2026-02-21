@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Dashboard</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        width: 400px;
+        max-width: 90%;
+        margin: 50px auto;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+        overflow: hidden;
+    }
+    .header {
+        background: #2e86de;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 18px;
+    }
+    #chat-box {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        background: #f9f9f9;
+    }
+    .message {
+        margin: 5px 0;
+        padding: 10px 15px;
+        border-radius: 15px;
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+    .message.user {
+        background: #2e86de;
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 0;
+    }
+    .message.assistant {
+        background: #e1e1e1;
+        color: black;
+        align-self: flex-start;
+        border-bottom-left-radius: 0;
+    }
+    .input-box {
+        display: flex;
+        border-top: 1px solid #ddd;
+    }
+    #message {
+        flex: 1;
+        padding: 10px 15px;
+        border: none;
+        outline: none;
+        font-size: 16px;
+    }
+    #send-btn {
+        padding: 0 20px;
+        border: none;
+        background: #2e86de;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    #send-btn:hover {
+        background: #1b4f72;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">Chat Dashboard</div>
+    <div id="chat-box"></div>
+    <div class="input-box">
+        <input type="text" id="message" placeholder="Type your message..." />
+        <button id="send-btn">Send</button>
+    </div>
+</div>
+
+<script>
+let currentConversation = null;
+
+// Load conversation on page load
+async function loadConversation() {
+    try {
+        const response = await fetch("/get_messages");
+        const messages = await response.json();
+        const chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML = "";
+
+        if (messages.length === 0) {
+            currentConversation = null;
+            return;
+        }
+
+        currentConversation = 1; // default conversation id
+        messages.forEach(msg => {
+            const div = document.createElement("div");
+            div.classList.add("message", msg[0]); // user or assistant
+            div.innerText = msg[1];
+            chatBox.appendChild(div);
+        });
+
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+    } catch (err) {
+        console.error("Error loading conversation:", err);
+    }
+}
+
+// Send message
+async function sendMessage() {
+    const input = document.getElementById("message");
+    const message = input.value.trim();
+    if (!message || !currentConversation) return;
+
+    const chatBox = document.getElementById("chat-box");
+
+    // Append user message immediately
+    const userDiv = document.createElement("div");
+    userDiv.classList.add("message", "user");
+    userDiv.innerText = message;
+    chatBox.appendChild(userDiv);
+    chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+    input.value = "";
+
+    try {
+        const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message })
+        });
+        const data = await response.json();
+
+        // Append assistant messages
+        data.messages.forEach(msg => {
+            const div = document.createElement("div");
+            div.classList.add("message", msg[0]);
+            div.innerText = msg[1];
+            chatBox.appendChild(div);
+        });
+
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+    } catch (err) {
+        console.error("Error sending message:", err);
+        const errorDiv = document.createElement("div");
+        errorDiv.classList.add("message", "assistant");
+        errorDiv.innerText = "Failed to send message. Please try again.";
+        chatBox.appendChild(errorDiv);
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+    }
+}
+
+// Handle enter key
+document.getElementById("message").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+// Handle send button click
+document.getElementById("send-btn").addEventListener("click", sendMessage);
+
+// Load conversation automatically
+window.onload = loadConversation;
+</script>
+
+</body>
+</html>
