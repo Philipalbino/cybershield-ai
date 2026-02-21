@@ -1,9 +1,11 @@
 import os
 import sqlite3
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, redirect, session, jsonify, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from ai_engine import analyze_message  # Your AI engine
+from threading import Thread
+import gradio as gr
 
 load_dotenv()
 
@@ -50,184 +52,102 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Initialize DB
 init_db()
+
+# ===============================
+# GRADIO AI CHATBOT
+# ===============================
+conversation_history = []
+
+def chat(message):
+    conversation_history.append({"role": "user", "content": message})
+    reply = analyze_message(conversation_history)
+    conversation_history.append({"role": "assistant", "content": reply})
+    return reply
+
+iface = gr.Interface(fn=chat, inputs="text", outputs="text", title="CyberShield-AI")
+
+def run_gradio():
+    iface.launch(server_name="0.0.0.0", server_port=7860)
+
+Thread(target=run_gradio).start()
 
 # ===============================
 # ROUTES
 # ===============================
-
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("index.html")  # SEO homepage with Google meta tag
 
 @app.route("/robots.txt")
 def robots():
     return send_from_directory(".", "robots.txt")
 
-# -------------------------------
-# REGISTER
-# -------------------------------
+# -----------------------
+# Registration
+# -----------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         username = request.form["username"]
         password = generate_password_hash(request.form["password"])
-
-        conn = sqlite3.connect("database.db")
-        c = conn.cursor()
         try:
-            c.execute("INSERT INTO users (username, password) VALUES (?,?)", (username, password))
+            conn = sqlite3.connect("database.db")
+            c = conn.cursor()
+            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
             conn.commit()
-        except sqlite3.IntegrityError:
             conn.close()
-            return render_template("register.html", error="Username already exists")
-        conn.close()
-
-        return redirect("/login")
-
+            return redirect("/login")
+        except sqlite3.IntegrityError:
+            return "Username already exists"
     return render_template("register.html")
 
-# -------------------------------
-# LOGIN
-# -------------------------------
+# -----------------------
+# Login
+# -----------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-
+        username = request.form["username"]
+        password = request.form["password"]
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
-        c.execute("SELECT id, password FROM users WHERE username=?", (username,))
-        row = c.fetchone()
+        c.execute("SELECT * FROM users WHERE username=?", (username,))
+        user = c.fetchone()
         conn.close()
-
-        if row and check_password_hash(row[1], password):
-            session["user_id"] = row[0]
-            session["username"] = username
+        if user and check_password_hash(user[2], password):
+            session["user_id"] = user[0]
             return redirect("/dashboard")
         else:
-            return render_template("login.html", error="Invalid credentials")
-
+            return "Invalid credentials"
     return render_template("login.html")
 
-# -------------------------------
-# LOGOUT
-# -------------------------------
+# -----------------------
+# Dashboard
+# -----------------------
+@app.route("/dashboard")
+def dashboard():
+    if "user_id" not in session:
+        return redirect("/login")
+    user_id = session["user_id"]
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM conversations WHERE user_id=?", (user_id,))
+    conversations = c.fetchall()
+    conn.close()
+    return render_template("dashboard.html", conversations=conversations)
+
+# -----------------------
+# Logout
+# -----------------------
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
 
-# -------------------------------
-# DASHBOARD
-# -------------------------------
-@app.route("/dashboard")
-def dashboard():
-    if "user_id" not in session:
-        return redirect("/login")
-    return render_template("dashboard.html", username=session["username"])
-
-# -------------------------------
-# CHAT
-# -------------------------------
-@app.route("/chat", methods=["POST"])
-def chat():
-    if "user_id" not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    data = request.json
-    user_input = data.get("message")
-
-    if not user_input:
-        return jsonify({"error": "Missing message"}), 400
-
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-
-    # Default conversation (single conversation per user)
-    c.execute("SELECT id FROM conversations WHERE user_id=?", (session["user_id"],))
-    row = c.fetchone()
-    if row:
-        conversation_id = row[0]
-    else:
-        c.execute("INSERT INTO conversations (user_id, title) VALUES (?, ?)",
-                  (session["user_id"], "Main Conversation"))
-        conn.commit()
-        conversation_id = c.lastrowid
-
-    # 1️⃣ Save user message
-    c.execute(
-        "INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)",
-        (conversation_id, "user", user_input)
-    )
-    conn.commit()
-
-    # 2️⃣ Get AI response
-    ai_response = analyze_message(user_input)
-
-    # 3️⃣ Save AI response
-    c.execute(
-        "INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)",
-        (conversation_id, "assistant", ai_response)
-    )
-    conn.commit()
-
-    # 4️⃣ Fetch full conversation history
-    c.execute(
-        "SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY id ASC",
-        (conversation_id,)
-    )
-    messages = c.fetchall()
-    conn.close()
-
-    return jsonify({"messages": messages})
-
-# -------------------------------
-# GET MESSAGES
-# -------------------------------
-# app.py
-
-@app.route("/get_messages", methods=["GET"])
-def get_messages():
-    """Return all messages for the default conversation for the logged-in user."""
-    if "user_id" not in session:
-        return jsonify([])
-
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-
-    # Get default conversation for the user
-    c.execute("""
-        SELECT id FROM conversations
-        WHERE user_id = ?
-        ORDER BY created_at ASC
-        LIMIT 1
-    """, (session["user_id"],))
-    row = c.fetchone()
-
-    if not row:
-        # If no conversation exists, create one
-        c.execute("INSERT INTO conversations (user_id, title) VALUES (?, ?)", 
-                  (session["user_id"], "Main Conversation"))
-        conn.commit()
-        conversation_id = c.lastrowid
-    else:
-        conversation_id = row[0]
-
-    # Fetch all messages for this conversation
-    c.execute("""
-        SELECT role, content FROM messages
-        WHERE conversation_id = ?
-        ORDER BY id ASC
-    """, (conversation_id,))
-    messages = c.fetchall()
-    conn.close()
-
-    return jsonify(messages)
-
-# ===============================
-# RUN APP
-# ===============================
+# -----------------------
+# Run Flask
+# -----------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8080)
