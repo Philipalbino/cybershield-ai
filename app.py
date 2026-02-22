@@ -1,6 +1,7 @@
 import os
 import sqlite3
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session, redirect, url_for
+import time
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
@@ -13,10 +14,10 @@ load_dotenv()
 # ===========================
 app = Flask(__name__, static_folder="static")
 app.secret_key = os.getenv("SECRET_KEY") or "super-secret-dev-key-123"
-
 @app.route("/google-site-verification: google701042e23c6c10eb.html")
 def google_verify():
     return app.send_static_file("google-site-verification: google701042e23c6c10eb.html")
+
 
 # ===========================
 # Database initialization
@@ -140,20 +141,12 @@ def dashboard():
 def logout():
     session.clear()
     return redirect("/")
-
-# ===========================
-# Chat API endpoint
-# ===========================
-conversation_history = []
-
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
     user_input = data.get("message", "")
 
-    conversation_history.append({"role": "user", "content": user_input})
-    reply = analyze_message(conversation_history)
-    conversation_history.append({"role": "assistant", "content": reply})
+    reply = analyze_message(user_input)
 
     return jsonify({"reply": reply})
 
