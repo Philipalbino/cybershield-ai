@@ -3,41 +3,69 @@
 <head>
     <title>CyberShield AI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <!-- ✅ PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#2563eb">
     <style>
+        :root {
+            --bg: #0f172a;
+            --sidebar: #111827;
+            --panel: #1e293b;
+            --primary: #2563eb;
+            --text: #ffffff;
+        }
+
+        body.light {
+            --bg: #f1f5f9;
+            --sidebar: #ffffff;
+            --panel: #e2e8f0;
+            --primary: #2563eb;
+            --text: #000000;
+        }
+
         body {
             margin: 0;
             font-family: "Segoe UI", sans-serif;
-            background-color: #0f172a;
+            background: var(--bg);
+            color: var(--text);
             display: flex;
             height: 100vh;
+            transition: 0.3s;
         }
 
         /* Sidebar */
         .sidebar {
-            width: 240px;
-            background: #111827;
-            color: white;
+            width: 260px;
+            background: var(--sidebar);
             padding: 20px;
             display: flex;
             flex-direction: column;
         }
 
         .sidebar h2 {
-            margin-top: 0;
-            font-size: 20px;
+            margin: 0 0 20px;
         }
 
-        .new-chat {
-            background: #2563eb;
+        .btn {
+            background: var(--primary);
             padding: 10px;
-            border-radius: 6px;
+            border-radius: 8px;
             text-align: center;
             cursor: pointer;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
-        /* Main Chat Area */
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .logout {
+            margin-top: auto;
+            text-decoration: none;
+            color: red;
+        }
+
+        /* Main */
         .main {
             flex: 1;
             display: flex;
@@ -45,95 +73,117 @@
         }
 
         .chat-header {
-            background: #1e293b;
+            background: var(--panel);
             padding: 15px;
-            color: white;
-            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .chat-box {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .message {
+            padding: 12px 16px;
+            border-radius: 12px;
             margin-bottom: 15px;
             max-width: 70%;
-            padding: 12px;
-            border-radius: 10px;
-            line-height: 1.4;
+            line-height: 1.5;
         }
 
         .user {
-            background: #2563eb;
+            background: var(--primary);
             color: white;
             align-self: flex-end;
         }
 
         .bot {
-            background: #1e293b;
-            color: white;
+            background: var(--panel);
             align-self: flex-start;
         }
 
         .input-area {
             display: flex;
             padding: 15px;
-            background: #1e293b;
+            background: var(--panel);
         }
 
         .input-area input {
             flex: 1;
-            padding: 10px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 8px;
             border: none;
             font-size: 15px;
         }
 
         .input-area button {
             margin-left: 10px;
-            padding: 10px 18px;
-            border-radius: 6px;
+            padding: 12px 18px;
+            border-radius: 8px;
             border: none;
-            background: #2563eb;
+            background: var(--primary);
             color: white;
             cursor: pointer;
         }
 
+        .input-area button:hover {
+            opacity: 0.8;
+        }
+
         .typing {
+            opacity: 0.6;
             font-style: italic;
-            opacity: 0.7;
         }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h2>CyberShield AI</h2>
-        <div class="new-chat" onclick="clearChat()">+ New Chat</div>
+<div class="sidebar">
+    <h2>CyberShield AI</h2>
+    <div class="btn" onclick="clearChat()">+ New Chat</div>
+    <div class="btn" onclick="toggleTheme()">🌗 Toggle Theme</div>
+    <a href="/logout" class="logout">Logout</a>
+</div>
+
+<div class="main">
+    <div class="chat-header">
+        <span>AI Security Assistant</span>
     </div>
 
-    <!-- Main Chat -->
-    <div class="main">
-        <div class="chat-header">
-            AI Security Assistant
-        </div>
+    <div class="chat-box" id="chat-box"></div>
 
-        <div class="chat-box" id="chat-box"></div>
-
-        <div class="input-area">
-            <input type="text" id="message" placeholder="Type your message..." onkeypress="handleKey(event)">
-            <button onclick="sendMessage()">Send</button>
-        </div>
+    <div class="input-area">
+        <input type="text" id="message" placeholder="Type your message..." onkeypress="handleKey(event)">
+        <button onclick="startVoice()">🎤</button>
+        <button onclick="sendMessage()">Send</button>
     </div>
+</div>
 
 <script>
-function handleKey(event) {
-    if (event.key === "Enter") {
-        sendMessage();
+/* ---------------------------
+   Theme Toggle
+---------------------------- */
+function toggleTheme() {
+    document.body.classList.toggle("light");
+    localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+}
+
+window.onload = function() {
+    if (localStorage.getItem("theme") === "light") {
+        document.body.classList.add("light");
     }
+};
+
+/* ---------------------------
+   Chat Functions
+---------------------------- */
+function handleKey(event) {
+    if (event.key === "Enter") sendMessage();
 }
 
 async function sendMessage() {
@@ -153,7 +203,6 @@ async function sendMessage() {
     });
 
     const data = await response.json();
-
     removeTyping();
     addMessage(data.reply, "bot");
 }
@@ -174,7 +223,6 @@ function addTyping() {
     typing.id = "typing";
     typing.innerText = "AI is typing...";
     chatBox.appendChild(typing);
-    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 function removeTyping() {
@@ -185,6 +233,24 @@ function removeTyping() {
 function clearChat() {
     document.getElementById("chat-box").innerHTML = "";
 }
+
+/* ---------------------------
+   Voice Recognition
+---------------------------- */
+function startVoice() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.start();
+
+    recognition.onresult = function(event) {
+        document.getElementById("message").value = event.results[0][0].transcript;
+    };
+}
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/static/service-worker.js")
+    .then(() => console.log("Service Worker Registered"));
+}
+
 </script>
 
 </body>

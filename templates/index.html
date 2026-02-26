@@ -4,37 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>CyberShield AI - Cybersecurity Chatbot</title>
-    
+    <!-- SEO Title -->
+    <title>CyberShield AI - AI Powered Cybersecurity Threat Detection</title>
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="CyberShield AI is an AI-powered cybersecurity and fraud detection chatbot platform. Protect yourself online with smart AI assistance.">
-    <meta name="keywords" content="AI, cybersecurity, chatbot, fraud detection, online security, threat analysis">
+    <meta name="description" content="CyberShield AI is an AI-powered cybersecurity and fraud detection chatbot platform. Detect malware, fraud, and online threats instantly using intelligent AI.">
+    <meta name="keywords" content="AI cybersecurity, fraud detection, chatbot security, malware detection, online protection, threat analysis">
+    <meta name="author" content="CyberShield AI">
 
     <!-- Google Search Console Verification -->
-    <meta name="google-site-verification"content="pkHP5SkQD7oJWhudXCQNCnq7YB-AzuLi9NWGarBra3I" />" />">
+    <meta name="google-site-verification" content="pkHP5SkQD7oJWhudXCQNCnq7YB-AzuLi9NWGarBra3I">
 
-    <!-- External CSS -->
-    <link rel="stylesheet" href="/static/style.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Favicon / App Icons -->
+<link rel="icon" href="{{ url_for('static', filename='icons/cybershield-48.png') }}" type="image/png">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/cybershield-192.png') }}"> 
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #0f172a;
+            color: white;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px;
+            background: #111827;
+        }
+
+        nav {
+            text-align: center;
+            padding: 15px;
+            background: #1f2937;
+        }
+
+        nav a {
+            color: #38bdf8;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            color: white;
+        }
+
+        main {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: #38bdf8;
+            color: black;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background: #0ea5e9;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #111827;
+            margin-top: 50px;
+            font-size: 14px;
+        }
+    </style>
 </head>
+
 <body>
+
     <header>
         <h1>CyberShield AI</h1>
-        <p>AI-Powered Cybersecurity & Fraud Detection</p>
+        <p>AI-Powered Cybersecurity & Fraud Detection Platform</p>
     </header>
 
     <nav>
-        <a href="/login">Login</a> | 
+        <a href="/">Home</a> |
+        <a href="/about">About</a> |
+        <a href="/services">Services</a> |
+        <a href="/blog">Blog</a> |
+        <a href="/contact">Contact</a> |
+        <a href="/login">Login</a> |
         <a href="/register">Register</a>
     </nav>
 
     <main>
-        <section>
-            <p>Welcome to CyberShield AI! Protect your online presence and detect fraud using our intelligent AI chatbot platform.</p>
-        </section>
+        <h2>Protect Your Digital World with AI</h2>
+        <p>
+            CyberShield AI uses advanced artificial intelligence to detect malware,
+            prevent fraud, and analyze cyber threats in real time.
+        </p>
+
+        <a href="/register" class="btn">Get Started</a>
     </main>
 
     <footer>
-        <p>&copy; 2026 CyberShield AI. All rights reserved.</p>
+        © 2026 CyberShield AI. All rights reserved.
     </footer>
+
 </body>
 </html>

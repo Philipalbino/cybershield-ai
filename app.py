@@ -1,32 +1,30 @@
 import os
 import sqlite3
-from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session, redirect, url_for
-import time
-
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
-from ai_engine import analyze_message  # Your AI engine
+from ai_engine import analyze_message
 
 load_dotenv()
 
 # ===========================
-# Flask app setup
+# Flask App Setup
 # ===========================
 app = Flask(__name__, static_folder="static")
 app.secret_key = os.getenv("SECRET_KEY") or "super-secret-dev-key-123"
+
 @app.route("/google-site-verification: google701042e23c6c10eb.html")
 def google_verify():
     return app.send_static_file("google-site-verification: google701042e23c6c10eb.html")
 
 
 # ===========================
-# Database initialization
+# Database Initialization
 # ===========================
 def init_db():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
 
-    # Users table
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +33,6 @@ def init_db():
         )
     """)
 
-    # Conversations table
     c.execute("""
         CREATE TABLE IF NOT EXISTS conversations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +42,6 @@ def init_db():
         )
     """)
 
-    # Messages table
     c.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,30 +58,34 @@ def init_db():
 init_db()
 
 # ===========================
-# SEO homepage & static files
+# SEO + Static Routes
 # ===========================
 @app.route("/")
 def home():
-    return render_template("index.html")  # Contains Google meta tag
+    return render_template("index.html")
 
 @app.route("/robots.txt")
 def robots():
     return app.send_static_file("robots.txt")
 
 # ===========================
-# User registration
+# Registration
 # ===========================
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
         hashed_pw = generate_password_hash(password)
 
         try:
             conn = sqlite3.connect("database.db")
             c = conn.cursor()
-            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_pw))
+            c.execute(
+                "INSERT INTO users (username, password) VALUES (?, ?)",
+                (username, hashed_pw),
+            )
             conn.commit()
             conn.close()
             return redirect("/login")
@@ -95,7 +95,7 @@ def register():
     return render_template("register.html")
 
 # ===========================
-# User login
+# Login
 # ===========================
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -118,7 +118,7 @@ def login():
     return render_template("login.html")
 
 # ===========================
-# User dashboard
+# Dashboard
 # ===========================
 @app.route("/dashboard")
 def dashboard():
@@ -126,6 +126,7 @@ def dashboard():
         return redirect("/login")
 
     user_id = session["user_id"]
+
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     c.execute("SELECT * FROM conversations WHERE user_id=?", (user_id,))
@@ -141,8 +142,15 @@ def dashboard():
 def logout():
     session.clear()
     return redirect("/")
+
+# ===========================
+# Chat API
+# ===========================
 @app.route("/chat", methods=["POST"])
 def chat():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
     data = request.json
     user_input = data.get("message", "")
 
@@ -151,8 +159,27 @@ def chat():
     return jsonify({"reply": reply})
 
 # ===========================
-# Production-ready entry
+# Extra Pages
+# ===========================
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+@app.route("/services")
+def services():
+    return render_template("services.html")
+
+@app.route("/blog")
+def blog():
+    return render_template("blog.html")
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
+
+# ===========================
+# Run App
 # ===========================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
