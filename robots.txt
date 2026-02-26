@@ -1,15 +1,15 @@
 # robots.txt for CyberShield AI
 
-# Allow all search engines to crawl main content
 User-agent: *
-Disallow:
+# Allow main pages
+Allow: /
 
-# Block sensitive pages
-Disallow: /login
-Disallow: /register
-Disallow: /static/
-Disallow: /conversation_memory.json
-Disallow: /ai_engine.log
+# Block sensitive or admin folders
+Disallow: /admin/
+Disallow: /api/
+Disallow: /static/icons/
+Disallow: /static/css/
+Disallow: /static/js/
 
-# Optional: specify sitemap if created
-# Sitemap: https://cybershield-ai-1.onrender.com/sitemap.xml
+# Optional: Sitemap location (if you have one)
+Sitemap:  https://cybershield-ai-1.onrender.com/sitemap.xml
