@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Install CyberShield AI</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#1f2833">
+  <style>
+    body { 
+      display: flex; flex-direction: column; 
+      justify-content: center; align-items: center; 
+      height: 100vh; text-align: center; background: #0b0c10; color: #fff;
+      font-family: Arial, sans-serif;
+    }
+    button { 
+      padding: 15px 30px; 
+      font-size: 18px; 
+      background: #1f2833; color: #66fcf1; 
+      border: none; border-radius: 10px; 
+      cursor: pointer; 
+      margin-top: 20px;
+    }
+    button:hover { background: #45a29e; color: #0b0c10; }
+  </style>
+</head>
+<body>
+  <h1>Install CyberShield AI</h1>
+  <p>Protect yourself online with our AI-powered cybersecurity chatbot.</p>
+  <button id="installBtn" style="display:none;">Install Now</button>
+
+  <script>
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    // Listen for install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'inline-block';
+    });
+
+    installBtn.addEventListener('click', async () => {
+      installBtn.style.display = 'none';
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        alert('CyberShield AI installed successfully!');
+      } else {
+        alert('Installation cancelled.');
+      }
+      deferredPrompt = null;
+    });
+  </script>
+</body>
+</html>
