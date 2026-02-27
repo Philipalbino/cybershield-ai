@@ -1,15 +1,7 @@
-# robots.txt for CyberShield AI
-
 User-agent: *
-# Allow main pages
 Allow: /
 
-# Block sensitive or admin folders
 Disallow: /admin/
 Disallow: /api/
-Disallow: /static/icons/
-Disallow: /static/css/
-Disallow: /static/js/
 
-# Optional: Sitemap location (if you have one)
-Sitemap:  https://cybershield-ai-1.onrender.com/sitemap.xml
+Sitemap: https://cybershield-ai-1.onrender.com/sitemap.xml
