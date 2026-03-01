@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO Meta Tags -->
     <title>CyberShield AI - AI Cybersecurity & Fraud Detection Chatbot</title>
@@ -16,21 +13,23 @@
     <!-- Google Site Verification -->
     <meta name="google-site-verification" content="pkHP5SkQD7oJWhudXCQNCnq7YB-AzuLi9NWGarBra3I">
 
-    <!-- Open Graph / Social Media -->
+    <!-- Open Graph -->
     <meta property="og:title" content="CyberShield AI - AI Cybersecurity & Fraud Detection Chatbot">
     <meta property="og:description"
-        content="Protect yourself online with CyberShield AI, an AI-powered cybersecurity and fraud detection chatbot. Stay secure from malware and fraud.">
+        content="Protect yourself online with CyberShield AI, an AI-powered cybersecurity and fraud detection chatbot.">
     <meta property="og:url" content="https://cybershield-ai-1.onrender.com">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://cybershield-ai-1.onrender.com/static/logo.png">
 
-    <!-- Favicon -->
+    <!-- Icons -->
     <link rel="icon" href="/static/logo.png" type="image/png">
-    <link rel="apple-touch-icon" href="/static/logo-192.png">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 
-    <!-- PWA Manifest -->
+    <!-- PWA -->
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#1f2833">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- CSS -->
     <style>
@@ -69,8 +68,7 @@
             padding: 50px 20px;
         }
 
-        .btn,
-        .btn-primary {
+        .btn, .btn-primary {
             display: inline-block;
             margin-top: 20px;
             padding: 12px 25px;
@@ -81,8 +79,7 @@
             font-weight: bold;
         }
 
-        .btn:hover,
-        .btn-primary:hover {
+        .btn:hover, .btn-primary:hover {
             background: #0ea5e9;
         }
 
@@ -94,69 +91,70 @@
             font-size: 14px;
         }
     </style>
+
 </head>
 
 <body>
 
-    <header>
-        <h1>CyberShield AI</h1>
-        <p>AI-Powered Cybersecurity & Fraud Detection Platform</p>
-    </header>
+<header>
+    <h1>CyberShield AI</h1>
+    <p>AI-Powered Cybersecurity & Fraud Detection Platform</p>
+</header>
 
-    <nav>
-        <a href="/">Home</a> |
-        <a href="/about">About</a> |
-        <a href="/services">Services</a> |
-        <a href="/blog">Blog</a> |
-        <a href="/contact">Contact</a> |
-        <a href="/login">Login</a> |
-        <a href="/register">Register</a>
-    </nav>
+<nav>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/services">Services</a>
+    <a href="/blog">Blog</a>
+    <a href="/contact">Contact</a>
+    <a href="/login">Login</a>
+    <a href="/register">Register</a>
+</nav>
 
-    <main>
-        <h2>Protect Your Digital World with AI</h2>
-        <p>
-            CyberShield AI uses advanced artificial intelligence to detect malware,
-            prevent fraud, and analyze cyber threats in real time.
-        </p>
-        <button id="installBtn" style="display:none;">Install CyberShield AI</button>
-        <a href="/install" class="btn-primary">Install CyberShield AI</a>
-        <a href="/register" class="btn">Get Started</a>
-    </main>
+<main>
+    <h2>Protect Your Digital World with AI</h2>
+    <p>
+        CyberShield AI uses advanced artificial intelligence to detect malware,
+        prevent fraud, and analyze cyber threats in real time.
+    </p>
 
-    <footer>
-        <p>&copy; 2026 CyberShield AI. All rights reserved.</p>
-        <p><a href="/privacy" style="color:#38bdf8;">Privacy Policy</a> | <a href="/terms"
-                style="color:#38bdf8;">Terms of Service</a></p>
-    </footer>
+    <button id="installBtn" style="display:none;" class="btn-primary">
+        Install CyberShield AI
+    </button>
 
-    <!-- PWA Service Worker & Install Prompt -->
-    <script>
-        // Install prompt button
-        let deferredPrompt;
-        const installBtn = document.getElementById('installBtn');
+    <a href="/register" class="btn">Get Started</a>
+</main>
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installBtn.style.display = 'inline-block';
-        });
+<footer>
+    <p>&copy; 2026 CyberShield AI. All rights reserved.</p>
+    <p>
+        <a href="/privacy" style="color:#38bdf8;">Privacy Policy</a> |
+        <a href="/terms" style="color:#38bdf8;">Terms of Service</a>
+    </p>
+</footer>
 
-        installBtn.addEventListener('click', async () => {
-            installBtn.style.display = 'none';
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            deferredPrompt = null;
-        });
+<!-- PWA Script -->
+<script>
+let deferredPrompt;
+const installBtn = document.getElementById('installBtn');
 
-        // Register service worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/service-worker.js')
-                .then(() => console.log('Service Worker registered'))
-                .catch((err) => console.log('Service Worker registration failed:', err));
-        }
-    </script>
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+});
+
+installBtn.addEventListener('click', async () => {
+    installBtn.style.display = 'none';
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+});
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/service-worker.js');
+}
+</script>
 
 </body>
-
 </html>
