@@ -1,53 +1,99 @@
 // ===============================
-// SIMPLE CHATGPT-STYLE CHAT
+// CHATGPT-STYLE CHAT (Improved)
 // ===============================
 
 async function sendMessage() {
 
     const input = document.getElementById("message");
     const message = input.value.trim();
+    const chatBox = document.getElementById("chat-box");
 
     if (!message) return;
 
-    const chatBox = document.getElementById("chat-box");
+    // =========================
+    // Add USER message
+    // =========================
+    const userMessage = document.createElement("div");
+    userMessage.classList.add("message", "user");
 
-    // 🔵 Add user message instantly
-    const userDiv = document.createElement("div");
-    userDiv.classList.add("message", "user");
-    userDiv.innerText = message;
-    chatBox.appendChild(userDiv);
+    const userContent = document.createElement("div");
+    userContent.classList.add("message-content");
+    userContent.innerText = message;
+
+    userMessage.appendChild(userContent);
+    chatBox.appendChild(userMessage);
 
     chatBox.scrollTop = chatBox.scrollHeight;
 
     input.value = "";
 
-    // 🤖 Send to backend
-    const response = await fetch("/chat", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ message: message })
-    });
+    // =========================
+    // Add Typing Indicator
+    // =========================
+    const typingDiv = document.createElement("div");
+    typingDiv.classList.add("message", "assistant");
 
-    const data = await response.json();
+    const typingContent = document.createElement("div");
+    typingContent.classList.add("message-content");
+    typingContent.innerText = "CyberShield AI is typing...";
 
-    // Clear chat and re-render full history
-    chatBox.innerHTML = "";
-
-    data.messages.forEach(msg => {
-        const div = document.createElement("div");
-        div.classList.add("message");
-        div.classList.add(msg[0]); // user or assistant
-        div.innerText = msg[1];
-        chatBox.appendChild(div);
-    });
+    typingDiv.appendChild(typingContent);
+    chatBox.appendChild(typingDiv);
 
     chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+        const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: message })
+        });
+
+        const data = await response.json();
+
+        // Remove typing indicator
+        chatBox.removeChild(typingDiv);
+
+        // =========================
+        // Add Assistant Message
+        // =========================
+        const botMessage = document.createElement("div");
+        botMessage.classList.add("message", "assistant");
+
+        const botContent = document.createElement("div");
+        botContent.classList.add("message-content");
+
+        botMessage.appendChild(botContent);
+        chatBox.appendChild(botMessage);
+
+        // Streaming effect (typing animation)
+        let text = data.reply;
+        let i = 0;
+
+        function typeWriter() {
+            if (i < text.length) {
+                botContent.innerText += text.charAt(i);
+                i++;
+                chatBox.scrollTop = chatBox.scrollHeight;
+                setTimeout(typeWriter, 10); // speed of typing
+            }
+        }
+
+        typeWriter();
+
+    } catch (error) {
+
+        typingContent.innerText = "Error connecting to server.";
+
+    }
 }
 
-
-// Press Enter to send
-document.getElementById("message").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
+// ===============================
+// Press Enter to Send
+// ===============================
+document.getElementById("message").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
         sendMessage();
     }
 });

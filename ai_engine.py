@@ -1,132 +1,58 @@
-# ai_engine.py
 import os
-import re
-from dotenv import load_dotenv
 from openai import OpenAI
-from knowledge_base import CYBER_KB
 
-# ===============================
-# LOAD ENVIRONMENT VARIABLES
-# ===============================
-load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# ===============================
-# RISK SCORING FUNCTION
-# ===============================
-def calculate_risk(message: str):
-    high_risk_keywords = [
-        "bank password", "otp", "one time password", "credit card", "debit card",
-        "wire transfer", "urgent payment", "click this link", "verify account",
-        "bitcoin", "crypto investment", "lottery winner", "send money",
-        "account suspended", "login immediately"
-    ]
-
-    score = 10
-    for word in high_risk_keywords:
-        if word.lower() in message.lower():
-            score += 15
-    if re.search(r"http[s]?://", message):
-        score += 20
-
-    # Cap score at 100
-    score = min(score, 100)
-
-    if score >= 75:
-        level = "Critical"
-    elif score >= 50:
-        level = "High"
-    elif score >= 30:
-        level = "Medium"
-    else:
-        level = "Low"
-
-    return score, level
-
-# ===============================
-# KNOWLEDGE BASE LOOKUP
-# ===============================
-def check_knowledge_base(message: str):
+def analyze_message(user_input, conversation_history):
     """
-    Looks for any topic in the KB inside the user message.
-    Returns structured response if found.
+    Generates strictly structured cybersecurity responses.
     """
-    message_lower = message.lower()
-    for topic, data in CYBER_KB.items():
-        if topic in message_lower:
-            return f"""
-📚 Knowledge Base Match: {topic.upper()}
 
-Definition:
-{data['definition']}
-
-Prevention Controls:
-- """ + "\n- ".join(data["controls"])
-    return None
-
-# ===============================
-# MAIN AI ANALYSIS FUNCTION
-# ===============================
-def analyze_message(message: str):
-    """
-    Returns AI-generated response:
-    - Uses knowledge base if topic matches
-    - Falls back to GPT-4 for any free-form cybersecurity/fraud/cyberbullying question
-    - Includes risk scoring and structured protection advice
-    """
-    # 1️ Check KB first
-    kb_response = check_knowledge_base(message)
-    score, level = calculate_risk(message)
-
-    if kb_response:
-        return f"""
-Risk Level: {level}
-Risk Score: {score}/100
-
-{kb_response}
-
-🛡 Awareness Advice:
-Always verify suspicious communications, enable MFA, and never share sensitive credentials.
-"""
-
-    # 2️ GPT-4 system prompt
     system_prompt = """
-You are CyberShield AI, a cybersecurity and fraud detection assistant.
+You are CyberShield AI, a professional cybersecurity expert.
 
-For every response:
-- Clearly explain the threat
-- Identify attack type
-- Explain why it is dangerous
-- Provide technical prevention controls
-- Provide user awareness advice
-- Give step-by-step protection recommendations
-- Keep response professional, structured, and actionable
+Always respond using EXACTLY these section titles in this order:
+
+Definition
+Types
+Example
+Causes
+Solutions
+Prevention
+Awareness
+
+Respond in a clean ChatGPT style:
+- Write the section title on its own line.
+- Do NOT add symbols like ### or **.
+- Do NOT use bullet points.
+- Leave one blank line after each section title.
+- Write 2–4 strong, well-structured sentences per section.
+- Always include cybersecurity or digital context when relevant.
+- Avoid generic academic tone.
+- Avoid textbook style explanations.
+- Write like a cybersecurity professional explaining clearly.
+- Keep language precise and confident.
 """
 
-    # 3️ Call OpenAI GPT-4
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": message}
-        ],
-        temperature=0.3
-    )
+    try:
+        messages = [
+            {"role": "system", "content": system_prompt}
+        ]
 
-    ai_text = response.choices[0].message.content
+        # Add previous conversation history
+        messages.extend(conversation_history)
 
-    # 4️ Final structured response
-    final_response = f"""
-Risk Level: {level}
-Risk Score: {score}/100
+        # Add current user message
+        messages.append({"role": "user", "content": user_input})
 
-{ai_text}
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.6,
+            max_tokens=900
+        )
 
-🔐 General Protection Checklist:
-• Enable Multi-Factor Authentication (MFA)
-• Use strong unique passwords
-• Keep systems updated
-• Avoid suspicious links
-• Verify sender identity before sharing data
-"""
-    return final_response
+        return response.choices[0].message.content
+
+    except Exception as e:
+        return f"⚠️ AI error: {str(e)}"
