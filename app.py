@@ -84,7 +84,9 @@ def clear_chat():
     session.pop("chat_history", None)
     return redirect("/dashboard")
 
-
+@app.route("/about")
+def about():
+    return render_template("about.html")
 
 # ================= DASHBOARD =================
 @app.route("/dashboard")
