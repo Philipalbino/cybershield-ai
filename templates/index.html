@@ -26,12 +26,39 @@
 <meta name="twitter:description" content="AI-powered cybersecurity and fraud detection chatbot.">
 <meta name="twitter:image" content="https://cybershield-ai-1.onrender.com/static/logo.png">
 
+<!-- Structured Data (SEO Schema) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "CyberShield AI",
+  "url": "https://cybershield-ai-1.onrender.com",
+  "logo": "https://cybershield-ai-1.onrender.com/static/logo.png"
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "CyberShield AI",
+  "url": "https://cybershield-ai-1.onrender.com",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://cybershield-ai-1.onrender.com/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
 <!-- Google Verification -->
 <meta name="google-site-verification" content="pkHP5SkQD7oJWhudXCQNCnq7YB-AzuLi9NWGarBra3I">
 
 <link rel="icon" href="/static/logo.png">
 
 <style>
+
+/* your CSS unchanged */
 
 *{
 margin:0;
@@ -160,7 +187,6 @@ background:#0e8e6f;
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-
 <div>
 <h2>CyberShield AI</h2>
 <a href="/login">Login</a>
@@ -170,20 +196,17 @@ background:#0e8e6f;
 <a href="/blog">Blog</a>
 <a href="/contact">Contact</a>
 </div>
-
 </div>
 
 <!-- CHAT AREA -->
 <div class="chat-wrapper">
 
 <div class="chat-box" id="chat-box">
-
 <div class="message-row">
 <div class="message bot">
 Hello 👋 I'm CyberShield AI. Ask me anything about cybersecurity.
 </div>
 </div>
-
 </div>
 
 <div class="input-area">
@@ -204,8 +227,6 @@ if(text==="") return;
 
 let chatBox=document.getElementById("chat-box");
 
-/* USER MESSAGE */
-
 let userRow=document.createElement("div");
 userRow.className="message-row user-row";
 
@@ -218,8 +239,6 @@ chatBox.appendChild(userRow);
 
 input.value="";
 chatBox.scrollTop=chatBox.scrollHeight;
-
-/* DEMO BOT */
 
 setTimeout(()=>{
 
